@@ -8,6 +8,8 @@ const int ADDRESS_LENGTH = 13;
 const int DATA_START = 22;
 const int DATA_LENGTH = 8;
 
+const int MAX_CHUNK_SIZE = 0x400;
+
 typedef byte Byte;
 typedef unsigned short Word;
 
@@ -39,7 +41,7 @@ void setup() {
   set_read_data_bus();
   read_mode();
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   delay(1000);
   
   /*
@@ -76,15 +78,15 @@ void write(Word addr, Byte data) {
   digitalWrite(WE, HIGH);
   digitalWrite(CE, LOW);
 
-  delay(100);
+  delay(10);
 
   digitalWrite(WE, LOW);
 
-  delay(100);
+  delay(10);
 
   digitalWrite(WE, HIGH);
 
-  delay(100);
+  delay(10);
 
   digitalWrite(OE, LOW);
   digitalWrite(CE, LOW);
@@ -188,13 +190,15 @@ void loop() {
 
         Word length = (data[0] << 8) | data[1];
         
-        byte* file = (byte*)malloc(length);
-        size_t totalReads = 0;
-
-        while (totalReads < length) {
-          size_t read = Serial.readBytes(&file[totalReads], length - totalReads);
-          totalReads += read;
+        byte* file = (byte*)malloc(MAX_CHUNK_SIZE);
+        if (!file) {
+          Serial.println("failed to malloc");
+          return;
         }
+
+        int chunks = (length / MAX_CHUNK_SIZE) + 1;
+
+        Serial.println(chunks);
 
         if (io_mode == 0) {
           io_mode = 1;
@@ -202,12 +206,30 @@ void loop() {
           delay(10);
         }
 
-        for (int i = 0; i < length; ++i) {
-          write(i, file[i]);
-          delay(1);
+        for (int i = 0; i < chunks; ++i) {
+          size_t num = (i == chunks - 1) ? (length % MAX_CHUNK_SIZE) : MAX_CHUNK_SIZE;
+          size_t totalReads = 0;
+          while (totalReads < num) {
+            size_t read = Serial.readBytes(&file[totalReads], num - totalReads);
+            if (read == 0) break;
+            totalReads += read;
+            Serial.println(totalReads);
+          }
+          delay(1000);
+
+          Serial.println("ok");
+
+          for (int j = 0; j < totalReads; ++j) {
+            write((MAX_CHUNK_SIZE * i) + j, file[j]);
+            Serial.println(j+1);
+            delay(1);
+          }
+
+          delay(1000);
+
+          Serial.println("ok");
         }
 
-        Serial.println("ok");
         free(file);
       }
     }
