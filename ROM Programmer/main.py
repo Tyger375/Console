@@ -47,7 +47,6 @@ def main():
             s.write(b)
             str = s.readline()
             v = str.strip()
-            print(hex(int(v)).removeprefix("0x").upper())
         elif d == "load":
             if len(op) < 2:
                 continue
