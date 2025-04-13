@@ -42,24 +42,6 @@ void setup() {
   read_mode();
 
   Serial.begin(115200);
-  delay(1000);
-  
-  /*
-  set_write_data_bus();
-  delay(10);
-  auto value = 0x44;
-  write(0x03, value);
-  Serial.println(hex(value));
-
-  delay(1000);*/
-
-  /*
-  address_change(0x03);
-  set_read_data_bus();
-  delay(10);
-  read_mode();
-  delay(1);
-  Serial.println(hex(read_data()));*/
 }
 
 void read_mode() {
@@ -174,10 +156,6 @@ void loop() {
 
         write(addr, data[2]);
         delay(10);
-        Serial.print(addr);
-        Serial.print(" ");
-        Serial.print(data[2]);
-        Serial.print(" ");
         Serial.println(0);
       }
       else if (op == 0x30) {
@@ -197,8 +175,6 @@ void loop() {
         }
 
         int chunks = (length / MAX_CHUNK_SIZE) + 1;
-
-        Serial.println(chunks);
 
         if (io_mode == 0) {
           io_mode = 1;
