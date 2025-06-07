@@ -1,6 +1,5 @@
 import serial
 import sys
-import logging
 
 TAB = "  "
 
@@ -51,7 +50,13 @@ def recv_str_result(conn: serial.Serial) -> str:
 def recv_int_result(conn: serial.Serial) -> int:
     return int(recv_str_result(conn))
 
-def exec_read(conn: serial.Serial, operation: list[str]):
+def _rom_read(conn: serial.Serial, addr: list[int]) -> int:
+    command = bytearray([0x10, *addr])
+    conn.write(command)
+
+    return recv_int_result(conn)
+
+def exec_read(conn: serial.Serial, operation: list[str]) -> int:
     if len(operation) < 2:
         format_tab()
         print("Invalid arguments")
@@ -64,15 +69,37 @@ def exec_read(conn: serial.Serial, operation: list[str]):
         print("Read address is not correct")
         return -1
 
-    command = bytearray([0x10, *values])
-    conn.write(command)
-
-    res = recv_int_result(conn)
+    res = _rom_read(conn, values)
     format_tab()
     print(hex_str(res))
     return 0
 
-def exec_write(conn: serial.Serial, operation: list[str]):
+def exec_check(conn: serial.Serial, operation: list[str]) -> int:
+    if len(operation) < 1:
+        format_tab()
+        print("Invalid arguments")
+        return
+    
+    filename = operation[0]
+    with open(filename, "rb") as f:
+        data = f.read()
+        length = len(data)
+        if length > (8 * 1024):
+            format_tab()
+            print("File is too big")
+            return
+        
+        for i in range(length):
+            addr = [(i >> 8) & 0xFF, i & 0xFF]
+            value = _rom_read(conn, addr)
+
+            if value != data[i]:
+                print(f"Different byte at {hex_str(i)}")
+    
+    print("Program is good")
+    return 0
+
+def exec_write(conn: serial.Serial, operation: list[str]) -> int:
     if len(operation) < 3:
         format_tab()
         print("Invalid arguments")
@@ -93,7 +120,7 @@ def exec_write(conn: serial.Serial, operation: list[str]):
     print("OK" if status_code == 0 else "Uncaught exception")
     return status_code
 
-def exec_load(conn: serial.Serial, operation: list[str]):
+def exec_load(conn: serial.Serial, operation: list[str]) -> int:
     if len(operation) < 1:
         format_tab()
         print("Invalid arguments")
@@ -142,6 +169,7 @@ def main():
         "read": exec_read,
         "write": exec_write,
         "load": exec_load,
+        "check": exec_check,
         "exit": lambda _0, _1: exit(0)
     }
 
