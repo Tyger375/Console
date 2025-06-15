@@ -1,18 +1,26 @@
 package com.takanenstudios.console_emulator
 
-import androidx.lifecycle.ViewModel
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.request.forms.formData
-import io.ktor.client.request.forms.submitFormWithBinaryData
-import io.ktor.client.request.get
-import io.ktor.client.statement.readBytes
-import io.ktor.client.statement.readRawBytes
-import io.ktor.http.Headers
-import io.ktor.http.HttpHeaders
-import io.ktor.http.isSuccess
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import kotlinx.serialization.Serializable
 import java.io.File
+
+@Serializable
+data class Registers(
+    val A: Int = 0,
+    val B: Int = 0,
+    val C: Int = 0,
+    val D: Int = 0,
+    val E: Int = 0,
+    val F: Int = 0,
+    val H: Int = 0,
+    val L: Int = 0,
+    val PC: Int = 0,
+    val SP: Int = 0
+)
 
 class EmulatorRepository {
     suspend fun getDump(): ByteArray? = try {
@@ -35,13 +43,30 @@ class EmulatorRepository {
                     append(HttpHeaders.ContentDisposition, "form-data; name=\"file\"; filename=\"file.asm\"")
                 })
             }
-        ).let {
-            if (it.status.isSuccess())
-                null
-            else
-                it.body()
-        }
+        ).body()
     } catch (e: Exception) {
-        "INTERNAL"
+        null
+    }
+
+    suspend fun restartEmulator(): Boolean = try {
+        httpClient.get("$address/emulator/restart")
+            .status.isSuccess()
+    } catch (e: Exception) {
+        false
+    }
+
+    suspend fun stepEmulator(): Boolean = try {
+        httpClient.get("$address/emulator/step")
+            .status.isSuccess()
+    } catch (e: Exception) {
+        false
+    }
+
+    suspend fun getRegisters(): Registers? = try {
+        httpClient.get("$address/cpu/registers")
+            .body()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
     }
 }

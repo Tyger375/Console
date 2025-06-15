@@ -49,7 +49,11 @@ public:
         response.setContentType("text/plain");
         std::ostream& out = response.send();
 
-        if (uri == "/emulator/step") {
+        if (uri == "/emulator/restart") {
+            emulator.cpu.reg.PC = 0;
+            emulator.cpu.initialize();
+            out << "OK";
+        } else if (uri == "/emulator/step") {
             emulator.request_step = true;
             out << "OK";
         } else if (uri == "/emulator/load_program") {
@@ -78,7 +82,7 @@ public:
                 std::string outputFile = prefix + ".bin";
                 std::string logFile = prefix + ".lst";
 
-                std::string command = ".\\zasm.exe -o " + outputFile + " " + asmFile;
+                std::string command = ".\\zasm.exe -u -w -o " + outputFile + " " + asmFile;
                 int result = std::system(command.c_str());
 
                 Poco::FileInputStream logInput(logFile);
