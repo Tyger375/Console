@@ -1,7 +1,6 @@
 const int WE = 52;
 const int OE = 53;
-const int E1 = 50;
-const int E2 = 51;
+const int CE = 50;
 
 const int ADDRESS_START = 37;
 const int ADDRESS_LENGTH = 13;
@@ -32,10 +31,7 @@ bool io_mode = 0; // 0 -> read | 1 -> write
 void setup() {
   pinMode(WE, OUTPUT);
   pinMode(OE, OUTPUT);
-  pinMode(E1, OUTPUT);
-  pinMode(E2, OUTPUT);
-
-  digitalWrite(E2, HIGH);
+  pinMode(CE, OUTPUT);
 
   for (int i = 0; i < ADDRESS_LENGTH; ++i) {
     pinMode(ADDRESS_START + i, OUTPUT);
@@ -50,7 +46,7 @@ void setup() {
 
 void read_mode() {
   digitalWrite(OE, LOW);
-  digitalWrite(E1, LOW);
+  digitalWrite(CE, LOW);
   digitalWrite(WE, HIGH);
 }
 
@@ -62,7 +58,7 @@ void write(Word addr, Byte data) {
 
   digitalWrite(OE, HIGH);
   digitalWrite(WE, HIGH);
-  digitalWrite(E1, LOW);
+  digitalWrite(CE, LOW);
 
   delay(10);
 
@@ -75,7 +71,7 @@ void write(Word addr, Byte data) {
   delay(10);
 
   digitalWrite(OE, LOW);
-  digitalWrite(E1, LOW);
+  digitalWrite(CE, LOW);
 }
 
 void address_change(Word address) {
