@@ -1,11 +1,11 @@
 ; Testing RAM
-; Work RAM is in area 0x4000-0x5FFF
+; Work RAM is in area 0x8000-0xBFFF
     org 0
 main:
     nop
     nop
     xor a
-    ld hl, $4000
+    ld hl, $8000
     ld de, $F000
     ld (hl), a
 loop:
